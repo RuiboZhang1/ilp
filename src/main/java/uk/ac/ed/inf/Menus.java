@@ -13,54 +13,120 @@ import java.util.HashMap;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+/**
+ * Using a HttpClient to get the menus from the server.
+ *
+ * <p> A Menus class could establish a connection to server and get the menus Json file.
+ * After getting the menus, the Menus class could deserialise the file and do further processing.</p>
+ *
+ */
 public class Menus {
-
+    // Just have one HttpClient, shared between all HttpRequests
     private static final HttpClient client = HttpClient.newHttpClient();
 
-    public String name;
-    public String port;
+    // variables
+    private String name;
+    private String port;
+    private ArrayList<Shop> shopList;
 
+    /**
+     * Construct a Menus object with two parameters
+     *
+     * @param name name of the server. E.g: LocalHost
+     * @param port port where the web server is running. E.g: 9898
+     */
     public Menus(String name, String port) {
         this.name = name;
         this.port = port;
     }
 
+    /**
+     * Return the int cost in pence for one delivery.
+     *
+     * <p> Grouping all the items and prices from different shops and store them into a hashmap.
+     * Accepts a variable number of ordered item names and check the prices from the hashmap.
+     * Add up all the prices of the item and plus the base delivery cost(50p).</p>
+     *
+     * @param orders variable number of String represents the ordered items.
+     * @return the int cost in pence of having all of these items delivered by drone,
+     * including the standard delivery charge of 50p per delivery
+     */
     public int getDeliveryCost(String... orders) {
-        final String MENUS_URL = "http://" + this.name + ":" + this.port + "/menus/menus.json";
-        int deliveryCost = 0;
+        getMenusFromServer();
+
+        int deliveryCost = 50; // base delivery cost is 50p
+
+        // create the HashMap to store all the items and prices from the menus
         HashMap<String, Integer> itemsAndPrices = new HashMap<String, Integer>();
 
+        for (Shop shop : shopList) {
+            for (Shop.Menu menuDetail : shop.menu) {
+                itemsAndPrices.put(menuDetail.item, menuDetail.pence);
+            }
+        }
+
+        for (String order : orders) {
+            deliveryCost += itemsAndPrices.get(order);
+        }
+
+        return deliveryCost;
+    }
+
+    /**
+     * parsing the menus.json to a list of json object
+     *
+     * <p>Establish a connection to server and retrieve the menus.json from the server.
+     * If the connection success, then parsing the json file into an ArrayList of Shop object.</p>
+     */
+    public void getMenusFromServer() {
+        String menusUrl = "http://" + this.name + ":" + this.port + "/menus/menus.json";
+
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(MENUS_URL))
+                .uri(URI.create(menusUrl))
                 .build();
 
         try {
             HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
-            Type listType = new TypeToken<ArrayList<Shop>>() {
-            }.getType();
-            ArrayList<Shop> shopList = new Gson().fromJson(response.body(), listType);
 
-            /**
-             * create a new hashmap, loop through shopList, add the item and pence into the hashmap
-             * then loop through the orders, find the price and add to deliveryCost
-             */
-            for (Shop shop : shopList) {
-                for (Shop.Menu menuDetail : shop.menu) {
-                    itemsAndPrices.put(menuDetail.item, menuDetail.pence);
-                }
+            if (response.statusCode() == 200) {
+                Type listType = new TypeToken<ArrayList<Shop>>() {}.getType();
+                this.shopList = new Gson().fromJson(response.body(), listType);
+            } else {
+                System.out.println("Status code:" + response.statusCode() +
+                        ". Unable to get the Menus from the server, please check the status code.");
+                System.exit(1);
             }
-
-            for (String order : orders) {
-                deliveryCost += itemsAndPrices.get(order);
-            }
-
-            deliveryCost += 50;
-        } catch (IOException e) {
+        } catch (InterruptedException| IOException e) {
+            System.out.println("Fatal error: Unable to connect to " + this.name + " at port " +
+                    this.port + ".");
             e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+            System.exit(1); // Exit the application
         }
+    }
 
-        return deliveryCost;
+    // getter
+    public String getName() {
+        return name;
+    }
+
+    public String getPort() {
+        return port;
+    }
+
+    public ArrayList<Shop> getShopList() {
+        return shopList;
+    }
+
+    // setter
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setPort(String port) {
+        this.port = port;
+    }
+
+    public void setShopList(ArrayList<Shop> shopList) {
+        this.shopList = shopList;
     }
 }
