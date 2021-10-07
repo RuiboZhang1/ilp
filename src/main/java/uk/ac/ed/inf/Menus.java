@@ -116,17 +116,4 @@ public class Menus {
     public ArrayList<Shop> getShopList() {
         return shopList;
     }
-
-    // setter
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setPort(String port) {
-        this.port = port;
-    }
-
-    public void setShopList(ArrayList<Shop> shopList) {
-        this.shopList = shopList;
-    }
 }
