@@ -18,7 +18,6 @@ import com.google.gson.reflect.TypeToken;
  *
  * <p> A Menus class could establish a connection to server and get the menus Json file.
  * After getting the menus, the Menus class could deserialise the file and do further processing.</p>
- *
  */
 public class Menus {
     // Just have one HttpClient, shared between all HttpRequests

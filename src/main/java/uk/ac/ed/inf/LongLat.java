@@ -2,8 +2,6 @@ package uk.ac.ed.inf;
 
 /**
  * A LongLat class represents a point or the position of a drone with longitude and latitude.
- *
- * @author Ruibo Zhang
  */
 public class LongLat {
 
