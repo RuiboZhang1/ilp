@@ -45,12 +45,12 @@ public class HttpServer {
             if (response.statusCode() == 200) {
                 this.jsonResponse = response.body();
             } else {
-                System.out.println("Status code:" + response.statusCode() +
+                System.err.println("Status code:" + response.statusCode() +
                         ". Unable to retrieve data from the server, please check the status code.");
                 System.exit(1);
             }
         } catch (InterruptedException | IOException e) {
-            System.out.println("Fatal error: Unable to connect to " + this.name + " at port " +
+            System.err.println("Fatal error: Unable to connect to " + this.name + " at port " +
                     this.port + ".");
             e.printStackTrace();
             System.exit(1); // Exit the application

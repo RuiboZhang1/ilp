@@ -18,8 +18,8 @@ public class Constants {
     public static final int HOVERING_ANGLE = -999;
 
     // Longitude and Latitude of some landmarks
-    public static final double APPLETON_TOWER_LONGITUDE = -3.191594;
-    public static final double APPLETON_TOWER_LATITUDE = 55.943658;
+    public static final double APPLETON_TOWER_LONGITUDE = -3.186874;
+    public static final double APPLETON_TOWER_LATITUDE = 55.944494;
 
     public static final double FORREST_HILL_LONGITUDE = -3.192473;
     public static final double FORREST_HILL_LATITUDE = 55.946233;

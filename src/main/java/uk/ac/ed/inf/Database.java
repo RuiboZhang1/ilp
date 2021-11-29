@@ -1,12 +1,7 @@
 package uk.ac.ed.inf;
 
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.ResultSet;
-import java.sql.PreparedStatement;
-import java.sql.Date;
+import java.sql.*;
 import java.text.ParseException;
 import java.util.ArrayList;
 
@@ -16,17 +11,48 @@ public class Database {
     private static final String DATABASE_NAME = "/derbyDB";
     private String name;
     private String port;
-    private ArrayList<Orders> orderList = new ArrayList<>();
+    private Statement statement;
+    private Connection conn;
+    private ArrayList<Order> orderList = new ArrayList<>();
 
     public Database(String name, String port) {
         this.name = name;
         this.port = port;
     }
 
-    public Connection connectToDatabase() throws SQLException {
+    public void connectToDatabase() throws SQLException {
         String jdbcString = PROTOCOL + this.name + ":" + this.port + DATABASE_NAME;
         Connection conn = DriverManager.getConnection(jdbcString);
-        return conn;
+        this.conn = conn;
+        this.statement = conn.createStatement();
+    }
+
+    public void deleteExistedTable(String tableName) throws SQLException {
+        DatabaseMetaData databaseMetadata = this.conn.getMetaData();
+
+        ResultSet resultSet =
+                databaseMetadata.getTables(null, null, tableName.toUpperCase(), null);
+        if (resultSet.next()) {
+            statement.execute("drop table " + tableName.toLowerCase());
+        }
+    }
+
+    public void createDeliveriesAndFlightpath() throws SQLException {
+        deleteExistedTable("deliveries");
+        deleteExistedTable("flightpath");
+
+        statement.execute("create table deliveries(" +
+                "orderNo char(8), " +
+                "deliveredTo varchar(19), " +
+                "costInPence int)");
+
+        statement.execute("create table flightpath(" +
+                "orderNo char(8), " +
+                "fromLongitude double, " +
+                "fromLatitude double, " +
+                "angle int, " +
+                "toLongitude double, " +
+                "toLatitude double)");
     }
 
     /**
@@ -35,9 +61,7 @@ public class Database {
      *
      * @param date
      */
-    public void getDataFromDatabase(Date date) throws SQLException, ParseException {
-        Connection conn = connectToDatabase();
-
+    public void getOrderFromDatabase(Date date) throws SQLException {
         String queryOrders = "select * from orders where deliveryDate=(?)";
         PreparedStatement psQuery = conn.prepareStatement(queryOrders);
         psQuery.setDate(1, date);
@@ -61,9 +85,12 @@ public class Database {
                 items.add(orderDetail.getString("item"));
             }
 
-            Orders order = new Orders(orderNumber, deliveryDate, customer, deliverTo, items);
+            Order order = new Order(orderNumber, deliveryDate, customer, deliverTo, items);
 
             this.orderList.add(order);
         }
+
+
+
     }
 }

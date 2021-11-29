@@ -20,13 +20,9 @@ import com.google.gson.reflect.TypeToken;
  * After getting the menus, the Menus class could deserialise the file and do further processing.</p>5
  */
 public class Menus {
-    // Just have one HttpServer, shared between all HttpRequests
-    private static final HttpClient client = HttpClient.newHttpClient();
-
-    // variables
-    private String name;
-    private String port;
+    private JsonParser jsonParser;
     private ArrayList<Shop> shopList;
+    private HashMap<String, Integer> itemsAndPrices = new HashMap<String, Integer>();
 
     /**
      * Construct a Menus object with two parameters
@@ -34,9 +30,19 @@ public class Menus {
      * @param name name of the server. E.g: LocalHost
      * @param port port where the web server is running. E.g: 9898
      */
-    public Menus(String name, String port) {
-        this.name = name;
-        this.port = port;
+    public Menus(JsonParser jsonParser) {
+        jsonParser.getMenusFromServer();
+        this.shopList = jsonParser.getMenus();
+        createItemsAndPrices();
+    }
+
+    public void createItemsAndPrices() {
+        // create the HashMap to store all the items and prices from the menus
+        for (Shop shop : shopList) {
+            for (Shop.Menu menuDetail : shop.menu) {
+                itemsAndPrices.put(menuDetail.item, menuDetail.pence);
+            }
+        }
     }
 
     /**
@@ -51,69 +57,21 @@ public class Menus {
      * including the standard delivery charge of 50p per delivery
      */
     public int getDeliveryCost(String... orders) {
-        getMenusFromServer();
-
         int deliveryCost = 50; // base delivery cost is 50p
-
-        // create the HashMap to store all the items and prices from the menus
-        HashMap<String, Integer> itemsAndPrices = new HashMap<String, Integer>();
-
-        for (Shop shop : shopList) {
-            for (Shop.Menu menuDetail : shop.menu) {
-                itemsAndPrices.put(menuDetail.item, menuDetail.pence);
-            }
-        }
-
         for (String order : orders) {
-            deliveryCost += itemsAndPrices.get(order);
+            deliveryCost += this.itemsAndPrices.get(order);
         }
 
         return deliveryCost;
     }
 
-    /**
-     * parsing the menus.json to a list of json object
-     *
-     * <p>Establish a connection to server and retrieve the menus.json from the server.
-     * If the connection success, then parsing the json file into an ArrayList of Shop object.</p>
-     */
-    @ Deprecated
-    public void getMenusFromServer() {
-        String menusUrl = "http://" + this.name + ":" + this.port + "/menus/menus.json";
-
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(menusUrl))
-                .build();
-
-        try {
-            HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
-
-            if (response.statusCode() == 200) {
-                Type listType = new TypeToken<ArrayList<Shop>>() {}.getType();
-                this.shopList = new Gson().fromJson(response.body(), listType);
-            } else {
-                System.out.println("Status code:" + response.statusCode() +
-                        ". Unable to get the Menus from the server, please check the status code.");
-                System.exit(1);
-            }
-        } catch (InterruptedException| IOException e) {
-            System.out.println("Fatal error: Unable to connect to " + this.name + " at port " +
-                    this.port + ".");
-            e.printStackTrace();
-            System.exit(1); // Exit the application
-        }
-    }
 
     // getter
-    public String getName() {
-        return name;
-    }
-
-    public String getPort() {
-        return port;
-    }
-
     public ArrayList<Shop> getShopList() {
-        return shopList;
+        return this.shopList;
+    }
+
+    public HashMap<String, Integer> getItemsAndPrices() {
+        return this.itemsAndPrices;
     }
 }

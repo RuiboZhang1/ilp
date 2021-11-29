@@ -14,7 +14,7 @@ public class JsonParser {
     private HttpServer httpServer;
     private List<Feature> noFlyZones;
     private List<Feature> landmarks;
-    private ArrayList<Shop> shops;
+    private ArrayList<Shop> menus;
     private W3wCoordinate wordLongLat;
 
 
@@ -22,7 +22,7 @@ public class JsonParser {
         this.httpServer = httpServer;
         this.noFlyZones = new ArrayList<>();
         this.landmarks = new ArrayList<>();
-        this.shops = new ArrayList<>();
+        this.menus = new ArrayList<>();
     }
 
     // Getter
@@ -38,14 +38,14 @@ public class JsonParser {
         return this.landmarks;
     }
 
-    public ArrayList<Shop> getShops() {
-        return this.shops;
+    public ArrayList<Shop> getMenus() {
+        return this.menus;
     }
 
 
     public void getLandmarksFromServer() {
         this.httpServer.retrieveJsonFromServer(httpServer.getHttpServer() + "/buildings/landmarks.geojson");
-        this.noFlyZones = FeatureCollection.fromJson(this.httpServer.getJsonResponse()).features();
+        this.landmarks = FeatureCollection.fromJson(this.httpServer.getJsonResponse()).features();
     }
 
     public void getNoFlyZonesFromServer() {
@@ -56,24 +56,26 @@ public class JsonParser {
     public void getMenusFromServer() {
         this.httpServer.retrieveJsonFromServer(httpServer.getHttpServer() + "/menus/menus.json");
         Type listType = new TypeToken<ArrayList<Shop>>() {}.getType();
-        this.shops = new Gson().fromJson(this.httpServer.getJsonResponse(), listType);
+        this.menus =  new Gson().fromJson(this.httpServer.getJsonResponse(), listType);
     }
 
-    public void getWordsLongLat(String w1, String w2, String w3) {
+    public W3wCoordinate getWordsLongLat(String w1, String w2, String w3) {
         this.httpServer.retrieveJsonFromServer(httpServer.getHttpServer() + "/words/" + w1 + "/" + w2 + "/" + w3
                 + "/details.json");
 
-        this.wordLongLat = new Gson().fromJson(this.httpServer.getJsonResponse(), W3wCoordinate.class);
+        W3wCoordinate wordLongLat = new Gson().fromJson(this.httpServer.getJsonResponse(), W3wCoordinate.class);
+        return wordLongLat;
     }
 
 
-    public static void main(String[] args) {
-        HttpServer httpServer = new HttpServer("localhost", "9898");
-        JsonParser jsonParser = new JsonParser(httpServer);
-
-        jsonParser.getWordsLongLat("army","monks","grapes");
-
-        System.out.println(jsonParser.wordLongLat.coordinates.lng);
-        System.out.println(jsonParser.wordLongLat.coordinates.lat);
-    }
+    // for testing
+//    public static void main(String[] args) {
+//        HttpServer httpServer = new HttpServer("localhost", "9898");
+//        JsonParser jsonParser = new JsonParser(httpServer);
+//
+//        jsonParser.getWordsLongLat("army","monks","grapes");
+//
+//        System.out.println(jsonParser.wordLongLat.coordinates.lng);
+//        System.out.println(jsonParser.wordLongLat.coordinates.lat);
+//    }
 }

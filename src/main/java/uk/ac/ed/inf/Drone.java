@@ -2,9 +2,16 @@ package uk.ac.ed.inf;
 
 public class Drone {
 
-    public static final int MAXIMUM_MOVE_BY_DRONE = 1500;
-    public static final double LENGTH_OF_DRONE_MOVE = 0.00015;
-    private LongLat position;
+    private int remainMovement;
+    private LongLat dronePos;
+    private Map map;
+
+
+    public Drone(Map map) {
+        this.remainMovement = Constants.MAXIMUM_MOVE_BY_DRONE;
+        this.dronePos = new LongLat(Constants.APPLETON_TOWER_LONGITUDE, Constants.APPLETON_TOWER_LATITUDE);
+        this.map = map;
+    }
 
 
 }
