@@ -1,4 +1,4 @@
 package uk.ac.ed.inf;
 
-public class Main {
+public class Map {
 }

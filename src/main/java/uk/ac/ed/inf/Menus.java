@@ -14,13 +14,13 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 /**
- * Using a HttpClient to get the menus from the server.
+ * Using a HttpServer to get the menus from the server.
  *
  * <p> A Menus class could establish a connection to server and get the menus Json file.
  * After getting the menus, the Menus class could deserialise the file and do further processing.</p>5
  */
 public class Menus {
-    // Just have one HttpClient, shared between all HttpRequests
+    // Just have one HttpServer, shared between all HttpRequests
     private static final HttpClient client = HttpClient.newHttpClient();
 
     // variables
@@ -77,6 +77,7 @@ public class Menus {
      * <p>Establish a connection to server and retrieve the menus.json from the server.
      * If the connection success, then parsing the json file into an ArrayList of Shop object.</p>
      */
+    @ Deprecated
     public void getMenusFromServer() {
         String menusUrl = "http://" + this.name + ":" + this.port + "/menus/menus.json";
 
