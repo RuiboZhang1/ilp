@@ -79,4 +79,8 @@ public class LongLat {
         }
         return this;
     }
+
+    public static LongLat convertW3wCoordinateToLongLat(W3wCoordinate w3wCoordinate) {
+        return new LongLat(w3wCoordinate.coordinates.lng, w3wCoordinate.coordinates.lat);
+    }
 }

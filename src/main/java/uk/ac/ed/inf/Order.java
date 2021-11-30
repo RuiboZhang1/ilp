@@ -21,4 +21,23 @@ public class Order {
         this.items = items;
     }
 
+    public String getOrderNo() {
+        return orderNo;
+    }
+
+    public Date getDeliveryDate() {
+        return deliveryDate;
+    }
+
+    public String getCustomer() {
+        return customer;
+    }
+
+    public String getDeliverTo() {
+        return deliverTo;
+    }
+
+    public ArrayList<String> getItems() {
+        return items;
+    }
 }

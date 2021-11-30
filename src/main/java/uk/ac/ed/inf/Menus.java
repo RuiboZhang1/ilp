@@ -1,6 +1,7 @@
 package uk.ac.ed.inf;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -8,6 +9,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 import com.google.gson.Gson;
@@ -56,13 +58,43 @@ public class Menus {
      * @return the int cost in pence of having all of these items delivered by drone,
      * including the standard delivery charge of 50p per delivery
      */
-    public int getDeliveryCost(String... orders) {
+    public int getDeliveryCost(ArrayList<String> orders) {
         int deliveryCost = 50; // base delivery cost is 50p
         for (String order : orders) {
             deliveryCost += this.itemsAndPrices.get(order);
         }
 
         return deliveryCost;
+    }
+
+    /**
+     * Return the W3W of the order shop
+     * @param orders
+     * @return
+     */
+    public ArrayList<String> getShopOfOrder(ArrayList<String> orders) {
+        ArrayList<String> shopLocation = new ArrayList<>();
+
+        for (Shop shop : this.shopList) {
+            ArrayList<String> menuItems = new ArrayList<>();
+            for (Shop.Menu menuDetail : shop.menu) {
+                menuItems.add(menuDetail.item);
+            }
+
+            for (String order : orders) {
+                // no more than two shop in one order
+                if (shopLocation.size() == 2) {
+                    break;
+                }
+
+                if (menuItems.contains(order)) {
+                    if (!shopLocation.contains(shop.location)) {
+                        shopLocation.add(shop.location);
+                    }
+                }
+            }
+        }
+        return shopLocation;
     }
 
 

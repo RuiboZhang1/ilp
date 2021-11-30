@@ -59,7 +59,12 @@ public class JsonParser {
         this.menus =  new Gson().fromJson(this.httpServer.getJsonResponse(), listType);
     }
 
-    public W3wCoordinate getWordsLongLat(String w1, String w2, String w3) {
+    public W3wCoordinate getWordsLongLat(String words) {
+        String[] wordList = words.split("\\.");
+        String w1 = wordList[0];
+        String w2 = wordList[1];
+        String w3 = wordList[2];
+
         this.httpServer.retrieveJsonFromServer(httpServer.getHttpServer() + "/words/" + w1 + "/" + w2 + "/" + w3
                 + "/details.json");
 
@@ -73,7 +78,7 @@ public class JsonParser {
 //        HttpServer httpServer = new HttpServer("localhost", "9898");
 //        JsonParser jsonParser = new JsonParser(httpServer);
 //
-//        jsonParser.getWordsLongLat("army","monks","grapes");
+//        jsonParser.getWordsLongLat("army.monks.grapes");
 //
 //        System.out.println(jsonParser.wordLongLat.coordinates.lng);
 //        System.out.println(jsonParser.wordLongLat.coordinates.lat);
