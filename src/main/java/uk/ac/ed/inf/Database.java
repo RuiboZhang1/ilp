@@ -15,6 +15,7 @@ public class Database {
     private Menus menus;
     private JsonParser jsonParser;
     private Statement statement;
+    private PreparedStatement prepStatement;
     private Connection conn;
     private ArrayList<Order> orderList = new ArrayList<>();
 
@@ -25,11 +26,21 @@ public class Database {
         this.jsonParser = jsonParser;
     }
 
+
+    public ArrayList<Order> getOrderList() {
+        return orderList;
+    }
+
+    public Connection getConnection() {
+        return conn;
+    }
+
     public void connectToDatabase() throws SQLException {
         String jdbcString = PROTOCOL + this.name + ":" + this.port + DATABASE_NAME;
         Connection conn = DriverManager.getConnection(jdbcString);
         this.conn = conn;
         this.statement = conn.createStatement();
+        System.out.println("Success connect to database.");
     }
 
     public void deleteExistedTable(String tableName) throws SQLException {
@@ -39,6 +50,7 @@ public class Database {
                 databaseMetadata.getTables(null, null, tableName.toUpperCase(), null);
         if (resultSet.next()) {
             statement.execute("drop table " + tableName.toLowerCase());
+            System.out.println("Delete existed table " + tableName);
         }
     }
 
@@ -51,6 +63,8 @@ public class Database {
                 "deliveredTo varchar(19), " +
                 "costInPence int)");
 
+        System.out.println("Create table deliveries");
+
         statement.execute("create table flightpath(" +
                 "orderNo char(8), " +
                 "fromLongitude double, " +
@@ -58,6 +72,8 @@ public class Database {
                 "angle int, " +
                 "toLongitude double, " +
                 "toLatitude double)");
+
+        System.out.println("Create table flightpath");
     }
 
     /**
@@ -94,94 +110,7 @@ public class Database {
 
             this.orderList.add(order);
         }
+
+        System.out.println("Success get order list from database");
     }
-
-    /**
-     * Sorting the order of delivery depending on the Ratio of price and distance in a greedy way.
-     */
-    public void sortOrderList() {
-        ArrayList<Double> ordersDistance = new ArrayList<>();
-        ArrayList<Integer> ordersPrice = new ArrayList<>();
-        ArrayList<Double> ordersPriceDistanceRatio = new ArrayList<>();
-        ArrayList<Order> sortedOrderList = new ArrayList<>();
-
-        LongLat startPos = new LongLat(Constants.APPLETON_TOWER_LONGITUDE, Constants.APPLETON_TOWER_LATITUDE);
-
-        for (int i = 0; i < this.orderList.size(); i++) {
-            Order currOrder = orderList.get(i);
-            double orderDistance = 0;
-            int orderPrice = menus.getDeliveryCost(currOrder.getItems());
-            ordersPrice.add(orderPrice);
-
-            // get start, pickup and target long lat
-            W3wCoordinate target = jsonParser.getWordsLongLat(currOrder.getDeliverTo());
-            LongLat targetPos = LongLat.convertW3wCoordinateToLongLat(target);
-            ArrayList<String> items = currOrder.getItems();
-            ArrayList<String> pickUpW3Ws = menus.getShopOfOrder(items);
-            ArrayList<LongLat> pickUpPos = new ArrayList<>();
-            for (String word : pickUpW3Ws) {
-                W3wCoordinate pickUp = jsonParser.getWordsLongLat(word);
-                pickUpPos.add(LongLat.convertW3wCoordinateToLongLat(pickUp));
-            }
-
-            if (pickUpPos.size() == 1) {
-                double startToPickUp = startPos.distanceTo(pickUpPos.get(0));
-                double pickUpToTarget = pickUpPos.get(0).distanceTo(targetPos);
-                orderDistance = startToPickUp + pickUpToTarget;
-                ordersDistance.add(orderDistance);
-            } else {
-                // we need to select which pickUp point first
-                double startToPickUp1 = startPos.distanceTo(pickUpPos.get(0));
-                double pickUp1ToPickUp2 = pickUpPos.get(0).distanceTo(pickUpPos.get(1));
-                double pickUp2ToTarget = pickUpPos.get(1).distanceTo(targetPos);
-                double firstChoice = startToPickUp1 + pickUp1ToPickUp2 + pickUp2ToTarget;
-
-                double startToPickUp2 = startPos.distanceTo(pickUpPos.get(1));
-                double pickUp2ToPickUp1 = pickUpPos.get(1).distanceTo(pickUpPos.get(0));
-                double pickUp1ToTarget = pickUpPos.get(0).distanceTo(targetPos);
-                double secondChoice = startToPickUp2 + pickUp2ToPickUp1 + pickUp1ToTarget;
-
-                orderDistance = Math.min(firstChoice, secondChoice);
-                ordersDistance.add(orderDistance);
-            }
-
-            double priceDistanceRatio = orderPrice / orderDistance;
-            ordersPriceDistanceRatio.add(priceDistanceRatio);
-        }
-
-        // Init the element list
-        ArrayList<Element> elements = new ArrayList<Element>();
-        for (int i = 0; i < ordersPriceDistanceRatio.size(); i++) {
-            elements.add(new Element(i, ordersPriceDistanceRatio.get(i)));
-        }
-
-        Collections.sort(elements);
-        Collections.reverse(elements); // If you want reverse order
-        for (Element element : elements) {
-            sortedOrderList.add(orderList.get(element.index));
-        }
-
-        this.orderList = sortedOrderList;
-        System.out.println("done");
-    }
-
-    class Element implements Comparable<Element> {
-
-        int index;
-        double value;
-
-        Element(int index, double value) {
-            this.index = index;
-            this.value = value;
-        }
-
-        public int compareTo(Element e) {
-            if (this.value < e.value)
-                return -1;
-            else if (e.value < this.value)
-                return 1;
-            return 0;
-        }
-    }
-
 }

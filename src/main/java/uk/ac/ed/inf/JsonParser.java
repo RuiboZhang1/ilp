@@ -42,24 +42,31 @@ public class JsonParser {
         return this.menus;
     }
 
+    public W3wCoordinate getWordLongLat() {
+        return this.wordLongLat;
+    }
 
-    public void getLandmarksFromServer() {
+
+    public void readLandmarksFromServer() {
         this.httpServer.retrieveJsonFromServer(httpServer.getHttpServer() + "/buildings/landmarks.geojson");
         this.landmarks = FeatureCollection.fromJson(this.httpServer.getJsonResponse()).features();
+        System.out.println("Read landmarks from server success");
     }
 
-    public void getNoFlyZonesFromServer() {
+    public void readNoFlyZonesFromServer() {
         this.httpServer.retrieveJsonFromServer(httpServer.getHttpServer() + "/buildings/no-fly-zones.geojson");
         this.noFlyZones = FeatureCollection.fromJson(this.httpServer.getJsonResponse()).features();
+        System.out.println("Read no fly zones from server success");
     }
 
-    public void getMenusFromServer() {
+    public void readMenusFromServer() {
         this.httpServer.retrieveJsonFromServer(httpServer.getHttpServer() + "/menus/menus.json");
         Type listType = new TypeToken<ArrayList<Shop>>() {}.getType();
         this.menus =  new Gson().fromJson(this.httpServer.getJsonResponse(), listType);
+        System.out.println("Read menus from server success");
     }
 
-    public W3wCoordinate getWordsLongLat(String words) {
+    public void readWordsLongLat(String words) {
         String[] wordList = words.split("\\.");
         String w1 = wordList[0];
         String w2 = wordList[1];
@@ -68,8 +75,7 @@ public class JsonParser {
         this.httpServer.retrieveJsonFromServer(httpServer.getHttpServer() + "/words/" + w1 + "/" + w2 + "/" + w3
                 + "/details.json");
 
-        W3wCoordinate wordLongLat = new Gson().fromJson(this.httpServer.getJsonResponse(), W3wCoordinate.class);
-        return wordLongLat;
+        this.wordLongLat = new Gson().fromJson(this.httpServer.getJsonResponse(), W3wCoordinate.class);
     }
 
 

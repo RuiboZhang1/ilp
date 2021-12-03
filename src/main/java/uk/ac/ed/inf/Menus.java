@@ -33,7 +33,7 @@ public class Menus {
      * @param port port where the web server is running. E.g: 9898
      */
     public Menus(JsonParser jsonParser) {
-        jsonParser.getMenusFromServer();
+        jsonParser.readMenusFromServer();
         this.shopList = jsonParser.getMenus();
         createItemsAndPrices();
     }

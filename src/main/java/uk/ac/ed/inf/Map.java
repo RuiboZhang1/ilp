@@ -10,9 +10,11 @@ import java.util.List;
 
 public class Map {
 
-    private List<Point> confinementArea;
-    private List<Geometry> landmarks;
-    private List<Geometry> noFlyZones;
+    private ArrayList<Point> confinementArea;
+    private ArrayList<Geometry> landmarks;
+    private ArrayList<Geometry> noFlyZones;
+    //private List<Point> shops;
+    //private List<Point> targets;
 
 
     /**
@@ -24,11 +26,13 @@ public class Map {
                 Point.fromLngLat(Constants.KFC_LONGITUDE, Constants.KFC_LATITUDE),
                 Point.fromLngLat(Constants.FORREST_HILL_LONGITUDE, Constants.FORREST_HILL_LATITUDE),
                 Point.fromLngLat(Constants.TOP_OF_MEADOWS_LONGITUDE, Constants.TOP_OF_MEADOWS_LATITUDE),
-                Point.fromLngLat(Constants.BUCCLEUCH_ST_BUS_STOP_LONGITUDE, Constants.BUCCLEUCH_ST_BUS_STOP_LATITUDE),
-                Point.fromLngLat(Constants.KFC_LONGITUDE, Constants.KFC_LATITUDE)));
+                Point.fromLngLat(Constants.BUCCLEUCH_ST_BUS_STOP_LONGITUDE, Constants.BUCCLEUCH_ST_BUS_STOP_LATITUDE)));
 
-        jsonParser.getLandmarksFromServer();
-        jsonParser.getNoFlyZonesFromServer();
+        this.landmarks = new ArrayList<Geometry>();
+        this.noFlyZones = new ArrayList<Geometry>();
+
+        jsonParser.readLandmarksFromServer();
+        jsonParser.readNoFlyZonesFromServer();
 
         List<Feature> landmarkList = jsonParser.getLandmarks();
         List<Feature> noFlyZoneList = jsonParser.getNoFlyZones();
@@ -42,5 +46,15 @@ public class Map {
         }
     }
 
+    public ArrayList<Point> getConfinementArea() {
+        return confinementArea;
+    }
 
+    public ArrayList<Geometry> getLandmarks() {
+        return landmarks;
+    }
+
+    public ArrayList<Geometry> getNoFlyZones() {
+        return noFlyZones;
+    }
 }

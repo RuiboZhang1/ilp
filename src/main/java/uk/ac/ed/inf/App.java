@@ -1,5 +1,7 @@
 package uk.ac.ed.inf;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.SQLException;
@@ -19,8 +21,8 @@ public class App {
 //        String webPort = args[3];
 //        String databasePort = args[4];
 
-        String day = "14";
-        String month = "12";
+        String day = "01";
+        String month = "01";
         String year = "2022";
         String webPort = "9898";
         String databasePort = "9876";
@@ -28,24 +30,35 @@ public class App {
         // initialise objects
         HttpServer httpServer = new HttpServer(NAME, webPort);
         JsonParser jsonParser = new JsonParser(httpServer);
-        //Map map = new Map(jsonParser);
+        Map map = new Map(jsonParser);
         Menus menus = new Menus(jsonParser);
-        Database dataBase = new Database(NAME, databasePort, menus, jsonParser);
-        //Drone drone = new Drone(map);
+        Database database = new Database(NAME, databasePort, menus, jsonParser);
+        Drone drone = new Drone(map, database, jsonParser, menus);
 
 
         // create the empty table of deliveries and flightpath
-        dataBase.connectToDatabase();
-        dataBase.createDeliveriesAndFlightpath();
+        database.connectToDatabase();
+        database.createDeliveriesAndFlightpath();
 
         // get orders and details from database
         String dateStr = year + "-" + month + "-" + day;
         Date date = Date.valueOf(dateStr);
-        dataBase.getOrderFromDatabase(date);
-        dataBase.sortOrderList();
+        database.getOrderFromDatabase(date);
+        //database.sortOrderList();
+        drone.startDeliveries();
+        //drone.getPath();
+        String geoJsonPath = drone.getGeoJsonPath();
 
-//        for (double ratio : ordersPriceDistanceRatio) {
-//            System.out.println(ratio);
-//        }
+        try {
+            FileWriter myWriter = new FileWriter(
+                    "readings-" + day + "-" + month + "-" + year + ".geojson");
+            myWriter.write(geoJsonPath);
+            myWriter.close();
+            System.out.println("GeoJson successfully created!");
+        } catch (IOException e) {
+            System.out.println("Fatal error: Readings GeoJson wasn't created.");
+            e.printStackTrace();
+        }
+
     }
 }
