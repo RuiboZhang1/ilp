@@ -16,7 +16,7 @@ public class LongLat {
     // variables
     private double longitude;
     private double latitude;
-    private int angle;
+    private int angle=-999;
 
     /**
      * Constructs a LongLat object to represent a point with two parameters.
@@ -27,27 +27,6 @@ public class LongLat {
     public LongLat(double longitude, double latitude) {
         this.longitude = longitude;
         this.latitude = latitude;
-        this.angle = 0;
-    }
-
-    /**
-     * Lower bound for the latitude -- Buccleuch St bus stop
-     * <br>Upper bound for the latitude -- KFC
-     *
-     * <br>Lower bound for the longitude -- Forrest hill
-     * <br>Upper bound for the longitude -- KFC
-     *
-     * @return {@code true} if the point within the drone confinement area
-     */
-    public boolean isConfined() {
-        if (this.latitude > Constants.BUCCLEUCH_ST_BUS_STOP_LATITUDE
-                && this.latitude < Constants.KFC_LATITUDE
-                && this.longitude > Constants.FORREST_HILL_LONGITUDE
-                && this.longitude < Constants.KFC_LONGITUDE) {
-            return true;
-        } else {
-            return false;
-        }
     }
 
     /**
@@ -77,17 +56,21 @@ public class LongLat {
      * @return a LongLat object represents the next position of the drone
      */
     public LongLat nextPosition(int angle) {
+        LongLat nextPos = new LongLat(0,0);
+
         if (angle == Constants.HOVERING_ANGLE) {
+            this.angle = angle;
             return this;
         } else if (angle < 0 || angle > 350 || angle % 10 != 0) {
             System.err.println(angle + "is invalid for the angle");
             System.exit(1);
         } else {
             // using Trigonometric function could get the next position easily
-            this.longitude += Constants.LENGTH_OF_DRONE_MOVE * Math.cos(Math.toRadians(angle));
-            this.latitude += Constants.LENGTH_OF_DRONE_MOVE * Math.sin(Math.toRadians(angle));
+            nextPos.longitude = this.longitude + Constants.LENGTH_OF_DRONE_MOVE * Math.cos(Math.toRadians(angle));
+            nextPos.latitude = this.latitude + Constants.LENGTH_OF_DRONE_MOVE * Math.sin(Math.toRadians(angle));
+            nextPos.angle = angle;
         }
-        return this;
+        return nextPos;
     }
 
     public boolean isValidMove(LongLat endPos, Map map) {
@@ -120,13 +103,12 @@ public class LongLat {
             Polygon noFlyZonePoly = (Polygon) noFlyZones.get(i);
             List<Point> polyPoints = noFlyZonePoly.coordinates().get(0);
 
-            for (int j = 0; j < polyPoints.size(); j++) {
-                int k = (j + 1) % polyPoints.size();
+            for (int j = 0; j < polyPoints.size()-1; j++) {
                 Line2D noFlyZoneLine = new Line2D.Double(
-                        polyPoints.get(j).coordinates().get(1),
-                        polyPoints.get(j).coordinates().get(0),
-                        polyPoints.get(k).coordinates().get(1),
-                        polyPoints.get(k).coordinates().get(0));
+                        polyPoints.get(j).latitude(),
+                        polyPoints.get(j).longitude(),
+                        polyPoints.get(j+1).latitude(),
+                        polyPoints.get(j+1).longitude());
 
                 if (curr2End.intersectsLine(noFlyZoneLine)) {
                     crossNoFlyZone = true;
@@ -135,7 +117,7 @@ public class LongLat {
             }
         }
 
-        if (crossConfinement & crossNoFlyZone) {
+        if (crossConfinement || crossNoFlyZone) {
             isValid = false;
         }
 
@@ -147,9 +129,8 @@ public class LongLat {
         int lastMoveAngle = this.angle;
         this.angle = estimateCurrTargetAngle(this, targetPos);
         boolean moveSuccess = false;
-        boolean increaseAngle = true;
+        boolean rotateClockwise = true;
         LongLat nextPos = null;
-        int incrementCount = 1;
 
         while (!moveSuccess) {
             nextPos = nextPosition(this.angle);
@@ -157,21 +138,20 @@ public class LongLat {
                 moveSuccess = true;
                 lastMoveAngle = this.angle;
             } else {
-                if (increaseAngle) {
-                    this.angle = validAngle(this.angle + 10 * incrementCount);
+                if (rotateClockwise) {
+                    this.angle = validAngle(this.angle - 10);
                     if (Math.abs(this.angle - lastMoveAngle) == 180) {
                         this.angle = validAngle(this.angle - 10);
+                        rotateClockwise = false;
                     }
-                    increaseAngle = false;
                 } else {
-                    this.angle = validAngle(this.angle - 10 * incrementCount);
+                    this.angle = validAngle(this.angle + 10);
                     if (Math.abs(this.angle - lastMoveAngle) == 180) {
                         this.angle = validAngle(this.angle + 10);
+                        rotateClockwise = true;
                     }
-                    increaseAngle = true;
                 }
             }
-            incrementCount++;
         }
 
         return nextPos;

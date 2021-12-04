@@ -44,6 +44,8 @@ public class Drone {
         traveledPoints.add(dronePos.getPoint());
         traveledAngles.add(dronePos.getAngle());
 
+        int startIndex = 0;
+
         while (!unfinishedOrders.isEmpty()) {
             // use sorting to find the best order to deliver first
             nextOrder = findBestOrder();
@@ -58,6 +60,14 @@ public class Drone {
             }
 
             int orderMove = 0;
+            int pickUpMove = 0;
+            int targetMove = 0;
+
+
+            List<Geometry> landmarks = map.getLandmarks();
+            Point landmarkPoint = (Point) landmarks.get(0);
+            LongLat landmark = new LongLat(landmarkPoint.longitude(), landmarkPoint.latitude());
+
             LongLat originPos = dronePos;
 
             // use moveDrone to move towards pickup location first, then go to target location
@@ -66,26 +76,35 @@ public class Drone {
                     dronePos = dronePos.moveDrone(map, pickUp);
                     orderPoints.add(dronePos.getPoint());
                     orderAngles.add(dronePos.getAngle());
-                    orderMove++;
+                    pickUpMove++;
+
+                    if (pickUpMove > 50) {
+                        while(!dronePos.closeTo(landmark)) {
+                            dronePos = dronePos.moveDrone(map, landmark);
+                            orderPoints.add(dronePos.getPoint());
+                            orderAngles.add(dronePos.getAngle());
+                            pickUpMove++;
+                        }
+                    }
                 }
                 dronePos = dronePos.nextPosition(-999);
                 orderPoints.add(dronePos.getPoint());
                 orderAngles.add(dronePos.getAngle());
-                orderMove++;
+                pickUpMove++;
             }
 
             while (!dronePos.closeTo(targetPos)) {
                 dronePos = dronePos.moveDrone(map, targetPos);
                 orderPoints.add(dronePos.getPoint());
                 orderAngles.add(dronePos.getAngle());
-                orderMove++;
+                targetMove++;
             }
             dronePos = dronePos.nextPosition(-999);
             orderPoints.add(dronePos.getPoint());
             orderAngles.add(dronePos.getAngle());
-            orderMove++;
+            targetMove++;
 
-            LongLat tempPos = dronePos;
+            LongLat tempPos = new LongLat(dronePos.getLongitude(), dronePos.getLatitude());
 
             int moveBackTermination = 0;
             // find the distance to go back appleton
@@ -94,6 +113,7 @@ public class Drone {
                 moveBackTermination++;
             }
 
+            orderMove = pickUpMove + targetMove;
             // if the order is valid to deliver
             if (orderMove + moveBackTermination <= remainMove) {
                 remainMove -= orderMove;
@@ -113,30 +133,32 @@ public class Drone {
                 prepStatement = database.getConnection().prepareStatement(
                         "insert into flightpath values (?, ?, ?, ?, ?, ?)");
 
-                for (int i=0; i < traveledPoints.size()-1; i++) {
+                for (int i=startIndex; i < traveledPoints.size()-1; i++) {
                     prepStatement.setString(1, nextOrder.getOrderNo());
                     prepStatement.setDouble(2, traveledPoints.get(i).longitude());
                     prepStatement.setDouble(3, traveledPoints.get(i).latitude());
-                    prepStatement.setInt(4, traveledAngles.get(i));
+                    prepStatement.setInt(4, traveledAngles.get(i+1));
                     prepStatement.setDouble(5, traveledPoints.get(i+1).longitude());
                     prepStatement.setDouble(6, traveledPoints.get(i+1).latitude());
                     prepStatement.execute();
                 }
+
+                startIndex = traveledPoints.size()-1;
             } else {
                 dronePos = originPos;
                 unfinishedOrders.remove(nextOrder);
             }
         }
 
-        int returnPoint = traveledPoints.size();
+        int returnPoint = traveledPoints.size()-1;
 
         while (!dronePos.closeTo(terminatePos)) {
-            dronePos.moveDrone(map, terminatePos);
+            dronePos = dronePos.moveDrone(map, terminatePos);
             traveledPoints.add(dronePos.getPoint());
             traveledAngles.add(dronePos.getAngle());
             remainMove--;
         }
-        dronePos.nextPosition(-999);
+        dronePos = dronePos.nextPosition(-999);
         traveledPoints.add(dronePos.getPoint());
         traveledAngles.add(dronePos.getAngle());
         remainMove--;
@@ -147,7 +169,7 @@ public class Drone {
             prepStatement.setString(1, nextOrder.getOrderNo());
             prepStatement.setDouble(2, traveledPoints.get(i).longitude());
             prepStatement.setDouble(3, traveledPoints.get(i).latitude());
-            prepStatement.setInt(4, traveledAngles.get(i));
+            prepStatement.setInt(4, traveledAngles.get(i+1));
             prepStatement.setDouble(5, traveledPoints.get(i+1).longitude());
             prepStatement.setDouble(6, traveledPoints.get(i+1).latitude());
             prepStatement.execute();

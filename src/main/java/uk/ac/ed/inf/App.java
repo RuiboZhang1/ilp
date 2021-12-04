@@ -1,5 +1,6 @@
 package uk.ac.ed.inf;
 
+import java.awt.geom.Line2D;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Connection;
@@ -21,8 +22,8 @@ public class App {
 //        String webPort = args[3];
 //        String databasePort = args[4];
 
-        String day = "01";
-        String month = "01";
+        String day = "03";
+        String month = "03";
         String year = "2022";
         String webPort = "9898";
         String databasePort = "9876";
@@ -34,6 +35,7 @@ public class App {
         Menus menus = new Menus(jsonParser);
         Database database = new Database(NAME, databasePort, menus, jsonParser);
         Drone drone = new Drone(map, database, jsonParser, menus);
+        Dro dro = new Dro(map, database, jsonParser, menus);
 
 
         // create the empty table of deliveries and flightpath
@@ -44,14 +46,13 @@ public class App {
         String dateStr = year + "-" + month + "-" + day;
         Date date = Date.valueOf(dateStr);
         database.getOrderFromDatabase(date);
-        //database.sortOrderList();
         drone.startDeliveries();
-        //drone.getPath();
+        //dro.startDeliveries();
         String geoJsonPath = drone.getGeoJsonPath();
 
         try {
             FileWriter myWriter = new FileWriter(
-                    "readings-" + day + "-" + month + "-" + year + ".geojson");
+                    "drone-" + day + "-" + month + "-" + year + ".geojson");
             myWriter.write(geoJsonPath);
             myWriter.close();
             System.out.println("GeoJson successfully created!");
@@ -59,6 +60,9 @@ public class App {
             System.out.println("Fatal error: Readings GeoJson wasn't created.");
             e.printStackTrace();
         }
+
+
+
 
     }
 }
