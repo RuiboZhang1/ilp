@@ -22,8 +22,8 @@ public class App {
 //        String webPort = args[3];
 //        String databasePort = args[4];
 
-        String day = "03";
-        String month = "03";
+        String day = "12";
+        String month = "12";
         String year = "2022";
         String webPort = "9898";
         String databasePort = "9876";
@@ -46,9 +46,10 @@ public class App {
         String dateStr = year + "-" + month + "-" + day;
         Date date = Date.valueOf(dateStr);
         database.getOrderFromDatabase(date);
-        drone.startDeliveries();
-        //dro.startDeliveries();
-        String geoJsonPath = drone.getGeoJsonPath();
+        //drone.startDeliveries();
+        dro.startDeliveries();
+        //dro.test();
+        String geoJsonPath = dro.getGeoJsonPath();
 
         try {
             FileWriter myWriter = new FileWriter(
