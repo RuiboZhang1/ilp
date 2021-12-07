@@ -81,7 +81,7 @@ public class LongLat {
         Line2D curr2End = new Line2D.Double(this.latitude, this.longitude, endPos.latitude, endPos.longitude);
 
         // check if cross confinement area
-        ArrayList<Point> confinementArea = map.getConfinementArea();
+        ArrayList<Point> confinementArea = map.confinementArea;
 
         for (int i = 0; i < confinementArea.size(); i++) {
             int j = (i + 1) % confinementArea.size();
@@ -98,7 +98,7 @@ public class LongLat {
         }
 
         // check if cross no fly zone
-        ArrayList<Geometry> noFlyZones = map.getNoFlyZones();
+        ArrayList<Geometry> noFlyZones = map.noFlyZones;
         for (int i = 0; i < noFlyZones.size(); i++) {
             Polygon noFlyZonePoly = (Polygon) noFlyZones.get(i);
             List<Point> polyPoints = noFlyZonePoly.coordinates().get(0);

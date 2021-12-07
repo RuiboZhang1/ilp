@@ -10,11 +10,9 @@ import java.util.List;
 
 public class Map {
 
-    private ArrayList<Point> confinementArea;
-    private ArrayList<Geometry> landmarks;
-    private ArrayList<Geometry> noFlyZones;
-    //private List<Point> shops;
-    //private List<Point> targets;
+    public final ArrayList<Point> confinementArea;
+    public final ArrayList<Geometry> landmarks;
+    public final ArrayList<Geometry> noFlyZones;
 
 
     /**
@@ -44,17 +42,5 @@ public class Map {
         for (int i=0; i<noFlyZoneList.size(); i++){
             this.noFlyZones.add(noFlyZoneList.get(i).geometry());
         }
-    }
-
-    public ArrayList<Point> getConfinementArea() {
-        return confinementArea;
-    }
-
-    public ArrayList<Geometry> getLandmarks() {
-        return landmarks;
-    }
-
-    public ArrayList<Geometry> getNoFlyZones() {
-        return noFlyZones;
     }
 }

@@ -2,7 +2,6 @@ package uk.ac.ed.inf;
 
 import com.mapbox.geojson.*;
 
-import java.lang.reflect.Array;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -10,16 +9,18 @@ import java.util.Collections;
 import java.util.List;
 
 public class Drone {
-
     private int remainMove;
     private LongLat dronePos;
-    private LongLat terminatePos;
+    private final LongLat terminatePos;
+
     private Map map;
     private Database database;
     private JsonParser jsonParser;
     private Menus menus;
+
     private ArrayList<Order> unfinishedOrders = new ArrayList<>();
     private ArrayList<Order> finishedOrders = new ArrayList<>();
+
     private List<Point> traveledPoints = new ArrayList<>();
     private List<Integer> traveledAngles = new ArrayList<>();
 
@@ -36,15 +37,12 @@ public class Drone {
 
 
     public void startDeliveries() throws SQLException {
-
-        // load the order list from database to unfinishedOrders
+        int startIndex = 0;
         unfinishedOrders = database.getOrderList();
         Order nextOrder = null;
 
         traveledPoints.add(dronePos.getPoint());
         traveledAngles.add(dronePos.getAngle());
-
-        int startIndex = 0;
 
         while (!unfinishedOrders.isEmpty()) {
             // use sorting to find the best order to deliver first
@@ -59,77 +57,94 @@ public class Drone {
                 pickUpPos = orderPickUpPos(pickUpPos, this.dronePos, targetPos);
             }
 
-            int orderMove = 0;
-            int pickUpMove = 0;
-            int targetMove = 0;
-
-
-
-            List<Geometry> landmarks = map.getLandmarks();
-            Point landmarkPoint = (Point) landmarks.get(0);
-            LongLat landmark = new LongLat(landmarkPoint.longitude(), landmarkPoint.latitude());
+            List<Geometry> landmarks = map.landmarks;
+            List<LongLat> landmarksLngLat = new ArrayList<>();
+            for (int i = 0; i < landmarks.size(); i++) {
+                Point landmark = (Point) landmarks.get(i);
+                LongLat landmarkLngLat = new LongLat(landmark.longitude(), landmark.latitude());
+                landmarksLngLat.add(landmarkLngLat);
+            }
 
             LongLat originPos = dronePos;
 
-            // use moveDrone to move towards pickup location first, then go to target location
+            int orderMove = 0;
+
+            // To pickup through landmarks
             for (LongLat pickUp : pickUpPos) {
-                int singlePickMove = 0;
-                while (!dronePos.closeTo(pickUp)) {
-                    dronePos = dronePos.moveDrone(map, pickUp);
+                boolean haveStraightLine = dronePos.isValidMove(pickUp, map);
+
+                if (haveStraightLine) {
+                    while (!dronePos.closeTo(pickUp)) {
+                        dronePos = dronePos.moveDrone(map, pickUp);
+                        orderPoints.add(dronePos.getPoint());
+                        orderAngles.add(dronePos.getAngle());
+                        orderMove++;
+                    }
+                } else {
+                    LongLat landmark = findBetterLandmark(landmarksLngLat, pickUp);
+
+                    while (!dronePos.closeTo(landmark)) {
+                        dronePos = dronePos.moveDrone(map, landmark);
+                        orderPoints.add(dronePos.getPoint());
+                        orderAngles.add(dronePos.getAngle());
+                        orderMove++;
+                    }
+
+                    while (!dronePos.closeTo(pickUp)) {
+                        dronePos = dronePos.moveDrone(map, pickUp);
+                        orderPoints.add(dronePos.getPoint());
+                        orderAngles.add(dronePos.getAngle());
+                        orderMove++;
+                    }
+                    dronePos = dronePos.nextPosition(-999);
                     orderPoints.add(dronePos.getPoint());
                     orderAngles.add(dronePos.getAngle());
-                    singlePickMove++;
+                    orderMove++;
+                }
+            }
 
-                    if (singlePickMove > 70) {
-                        while(!dronePos.closeTo(landmark)) {
-                            dronePos = dronePos.moveDrone(map, landmark);
-                            orderPoints.add(dronePos.getPoint());
-                            orderAngles.add(dronePos.getAngle());
-                            pickUpMove++;
-                    }
-                    pickUpMove += singlePickMove;
-                    singlePickMove = 0;
-                    }
+            // To delivery position through landmarks
+            boolean haveStraightLine = dronePos.isValidMove(targetPos, map);
+
+            if (haveStraightLine) {
+                while (!dronePos.closeTo(targetPos)) {
+                    dronePos = dronePos.moveDrone(map, targetPos);
+                    orderPoints.add(dronePos.getPoint());
+                    orderAngles.add(dronePos.getAngle());
+                    orderMove++;
+                }
+            } else {
+                LongLat landmark = findBetterLandmark(landmarksLngLat, targetPos);
+
+                while (!dronePos.closeTo(landmark)) {
+                    dronePos = dronePos.moveDrone(map, landmark);
+                    orderPoints.add(dronePos.getPoint());
+                    orderAngles.add(dronePos.getAngle());
+                    orderMove++;
+                }
+
+                while (!dronePos.closeTo(targetPos)) {
+                    dronePos = dronePos.moveDrone(map, targetPos);
+                    orderPoints.add(dronePos.getPoint());
+                    orderAngles.add(dronePos.getAngle());
+                    orderMove++;
                 }
                 dronePos = dronePos.nextPosition(-999);
                 orderPoints.add(dronePos.getPoint());
                 orderAngles.add(dronePos.getAngle());
-                pickUpMove++;
+                orderMove++;
             }
 
-            while (!dronePos.closeTo(targetPos)) {
-                dronePos = dronePos.moveDrone(map, targetPos);
-                orderPoints.add(dronePos.getPoint());
-                orderAngles.add(dronePos.getAngle());
-                targetMove++;
-
-                if (targetMove > 50) {
-                    while(!dronePos.closeTo(landmark)) {
-                        dronePos = dronePos.moveDrone(map, landmark);
-                        orderPoints.add(dronePos.getPoint());
-                        orderAngles.add(dronePos.getAngle());
-                        targetMove++;
-                    }
-                    orderMove+=targetMove;
-                    targetMove = 0;
-                }
-            }
-            dronePos = dronePos.nextPosition(-999);
-            orderPoints.add(dronePos.getPoint());
-            orderAngles.add(dronePos.getAngle());
-            targetMove++;
-
+            // check if enough move to go back appleton tower
             LongLat tempPos = new LongLat(dronePos.getLongitude(), dronePos.getLatitude());
-
             int moveBackTermination = 0;
-            // find the distance to go back appleton
+
             while (!tempPos.closeTo(terminatePos)) {
                 tempPos = tempPos.moveDrone(map, terminatePos);
                 moveBackTermination++;
             }
 
-            orderMove = pickUpMove + targetMove;
-            // if the order is valid to deliver
+            // if order is valid
             if (orderMove + moveBackTermination <= remainMove) {
                 remainMove -= orderMove;
                 unfinishedOrders.remove(nextOrder);
@@ -148,24 +163,23 @@ public class Drone {
                 prepStatement = database.getConnection().prepareStatement(
                         "insert into flightpath values (?, ?, ?, ?, ?, ?)");
 
-                for (int i=startIndex; i < traveledPoints.size()-1; i++) {
+                for (int i = startIndex; i < traveledPoints.size() - 1; i++) {
                     prepStatement.setString(1, nextOrder.getOrderNo());
                     prepStatement.setDouble(2, traveledPoints.get(i).longitude());
                     prepStatement.setDouble(3, traveledPoints.get(i).latitude());
-                    prepStatement.setInt(4, traveledAngles.get(i+1));
-                    prepStatement.setDouble(5, traveledPoints.get(i+1).longitude());
-                    prepStatement.setDouble(6, traveledPoints.get(i+1).latitude());
+                    prepStatement.setInt(4, traveledAngles.get(i + 1));
+                    prepStatement.setDouble(5, traveledPoints.get(i + 1).longitude());
+                    prepStatement.setDouble(6, traveledPoints.get(i + 1).latitude());
                     prepStatement.execute();
                 }
-
-                startIndex = traveledPoints.size()-1;
+                startIndex = traveledPoints.size() - 1;
             } else {
                 dronePos = originPos;
                 unfinishedOrders.remove(nextOrder);
             }
         }
 
-        int returnPoint = traveledPoints.size()-1;
+        int returnPoint = traveledPoints.size() - 1;
 
         while (!dronePos.closeTo(terminatePos)) {
             dronePos = dronePos.moveDrone(map, terminatePos);
@@ -180,27 +194,19 @@ public class Drone {
 
         PreparedStatement prepStatement = database.getConnection().prepareStatement(
                 "insert into flightpath values (?, ?, ?, ?, ?, ?)");
-        for (int i=returnPoint; i<traveledPoints.size()-1; i++) {
+        for (int i = returnPoint; i < traveledPoints.size() - 1; i++) {
             prepStatement.setString(1, nextOrder.getOrderNo());
             prepStatement.setDouble(2, traveledPoints.get(i).longitude());
             prepStatement.setDouble(3, traveledPoints.get(i).latitude());
-            prepStatement.setInt(4, traveledAngles.get(i+1));
-            prepStatement.setDouble(5, traveledPoints.get(i+1).longitude());
-            prepStatement.setDouble(6, traveledPoints.get(i+1).latitude());
+            prepStatement.setInt(4, traveledAngles.get(i + 1));
+            prepStatement.setDouble(5, traveledPoints.get(i + 1).longitude());
+            prepStatement.setDouble(6, traveledPoints.get(i + 1).latitude());
             prepStatement.execute();
         }
 
         System.out.println("save deliveries and flightpath in database");
-
-        // remember the amount of movement they made
-
-        // record the point of movement
-
-        // remove the order from unfinished order, add it into finished orders
-
-        // determine if the remain movement enough to do next deliveries or go back to appleton
-
     }
+
 
     public Order findBestOrder() {
         ArrayList<Double> ordersDistance = new ArrayList<>();
@@ -287,14 +293,63 @@ public class Drone {
     }
 
     public String getGeoJsonPath() {
-        LineString lineString = LineString.fromLngLats(traveledPoints);
-        Geometry geometry = (Geometry) lineString;
-        Feature feature = Feature.fromGeometry(geometry);
-        FeatureCollection featureCollection = FeatureCollection.fromFeature(feature);
+
+        LineString flightPathLineString = LineString.fromLngLats(traveledPoints);
+        Geometry flightPathGeometry = (Geometry) flightPathLineString;
+        Feature flightPathFeature = Feature.fromGeometry(flightPathGeometry);
+        FeatureCollection featureCollection = FeatureCollection.fromFeature(flightPathFeature);
 
         return featureCollection.toJson();
 
     }
 
+    public LongLat findBetterLandmark(List<LongLat> landmarksLngLat, LongLat targetPos) {
+        int[] droneToLandmarkToPickUp = new int[2];
+
+        for (int i = 0; i < landmarksLngLat.size(); i++) {
+            LongLat landmark = landmarksLngLat.get(i);
+            LongLat tempPos = new LongLat(dronePos.getLongitude(), dronePos.getLatitude());
+            List<Point> tempPoints = new ArrayList<>();
+            List<Integer> tempAngles = new ArrayList<>();
+            int move = 0;
+
+            if (tempPos.isValidMove(landmark, map)) {
+                while (!tempPos.closeTo(landmark)) {
+                    tempPos = tempPos.moveDrone(map, landmark);
+                    tempPoints.add(tempPos.getPoint());
+                    tempAngles.add(tempPos.getAngle());
+                    move++;
+                }
+            } else {
+                droneToLandmarkToPickUp[i] = Integer.MAX_VALUE;
+            }
+
+            if (tempPos.isValidMove(targetPos, map)) {
+                while (!tempPos.closeTo(targetPos)) {
+                    tempPos = tempPos.moveDrone(map, targetPos);
+                    tempPoints.add(tempPos.getPoint());
+                    tempAngles.add(tempPos.getAngle());
+                    move++;
+                }
+                tempPos = tempPos.nextPosition(-999);
+                tempPoints.add(tempPos.getPoint());
+                tempAngles.add(tempPos.getAngle());
+                move++;
+
+                droneToLandmarkToPickUp[i] = move;
+            } else {
+                droneToLandmarkToPickUp[i] = Integer.MAX_VALUE;
+            }
+        }
+
+        if (droneToLandmarkToPickUp[0] < droneToLandmarkToPickUp[1]) {
+            return landmarksLngLat.get(0);
+        } else {
+            return landmarksLngLat.get(1);
+        }
+
+    }
+
 
 }
+

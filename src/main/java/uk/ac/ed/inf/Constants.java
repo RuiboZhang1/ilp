@@ -32,5 +32,7 @@ public class Constants {
 
     public static final double BUCCLEUCH_ST_BUS_STOP_LONGITUDE = -3.184319;
     public static final double BUCCLEUCH_ST_BUS_STOP_LATITUDE = 55.942617;
+
+
 }
 

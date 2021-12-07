@@ -11,18 +11,18 @@ import java.util.List;
 
 public class JsonParser {
 
-    private HttpServer httpServer;
-    private List<Feature> noFlyZones;
-    private List<Feature> landmarks;
-    private ArrayList<Shop> menus;
+    public final HttpServer httpServer;
+    public final List<Feature> noFlyZones;
+    public final List<Feature> landmarks;
+    public final ArrayList<Shop> menus;
     private W3wCoordinate wordLongLat;
 
 
     public JsonParser(HttpServer httpServer) {
         this.httpServer = httpServer;
-        this.noFlyZones = new ArrayList<>();
-        this.landmarks = new ArrayList<>();
-        this.menus = new ArrayList<>();
+        this.noFlyZones = readNoFlyZonesFromServer();
+        this.landmarks = readLandmarksFromServer();
+        this.menus = readMenusFromServer();
     }
 
     // Getter
@@ -47,23 +47,26 @@ public class JsonParser {
     }
 
 
-    public void readLandmarksFromServer() {
+    public List<Feature> readLandmarksFromServer() {
         this.httpServer.retrieveJsonFromServer(httpServer.getHttpServer() + "/buildings/landmarks.geojson");
-        this.landmarks = FeatureCollection.fromJson(this.httpServer.getJsonResponse()).features();
+        List<Feature> landmarks = FeatureCollection.fromJson(this.httpServer.getJsonResponse()).features();
         System.out.println("Read landmarks from server success");
+        return landmarks;
     }
 
-    public void readNoFlyZonesFromServer() {
+    public List<Feature> readNoFlyZonesFromServer() {
         this.httpServer.retrieveJsonFromServer(httpServer.getHttpServer() + "/buildings/no-fly-zones.geojson");
-        this.noFlyZones = FeatureCollection.fromJson(this.httpServer.getJsonResponse()).features();
+        List<Feature> noFlyZones = FeatureCollection.fromJson(this.httpServer.getJsonResponse()).features();
         System.out.println("Read no fly zones from server success");
+        return noFlyZones;
     }
 
-    public void readMenusFromServer() {
+    public ArrayList<Shop> readMenusFromServer() {
         this.httpServer.retrieveJsonFromServer(httpServer.getHttpServer() + "/menus/menus.json");
         Type listType = new TypeToken<ArrayList<Shop>>() {}.getType();
-        this.menus =  new Gson().fromJson(this.httpServer.getJsonResponse(), listType);
+        ArrayList<Shop> menus =  new Gson().fromJson(this.httpServer.getJsonResponse(), listType);
         System.out.println("Read menus from server success");
+        return menus;
     }
 
     public void readWordsLongLat(String words) {
@@ -77,16 +80,4 @@ public class JsonParser {
 
         this.wordLongLat = new Gson().fromJson(this.httpServer.getJsonResponse(), W3wCoordinate.class);
     }
-
-
-    // for testing
-//    public static void main(String[] args) {
-//        HttpServer httpServer = new HttpServer("localhost", "9898");
-//        JsonParser jsonParser = new JsonParser(httpServer);
-//
-//        jsonParser.getWordsLongLat("army.monks.grapes");
-//
-//        System.out.println(jsonParser.wordLongLat.coordinates.lng);
-//        System.out.println(jsonParser.wordLongLat.coordinates.lat);
-//    }
 }

@@ -52,8 +52,7 @@ public class HttpServer {
         } catch (InterruptedException | IOException e) {
             System.err.println("Fatal error: Unable to connect to " + this.name + " at port " +
                     this.port + ".");
-            e.printStackTrace();
-            System.exit(1); // Exit the application
+            System.exit(1);
         }
     }
 }

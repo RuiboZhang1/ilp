@@ -1,20 +1,22 @@
 package uk.ac.ed.inf;
 
-import java.awt.geom.Line2D;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.sql.Connection;
 import java.sql.Date;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.text.ParseException;
-import java.util.ArrayList;
 
 public class App {
-    private static final String NAME = "localhost";
+    public static final String NAME = "localhost";
 
+    public static void writeFile(String geoJsonPath, String day, String month, String year) throws IOException {
+        FileWriter myWriter = new FileWriter(
+                "drone-" + day + "-" + month + "-" + year + ".geojson");
+        myWriter.write(geoJsonPath);
+        myWriter.close();
+        System.out.println("GeoJson file created");
+    }
 
-    public static void main(String[] args) throws SQLException {
+    public static void main(String[] args) throws SQLException, IOException {
         // reading the args
 //        String day = args[0];
 //        String month = args[1];
@@ -22,9 +24,10 @@ public class App {
 //        String webPort = args[3];
 //        String databasePort = args[4];
 
-        String day = "12";
+
+        String day = "30";
         String month = "12";
-        String year = "2022";
+        String year = "2023";
         String webPort = "9898";
         String databasePort = "9876";
 
@@ -35,7 +38,6 @@ public class App {
         Menus menus = new Menus(jsonParser);
         Database database = new Database(NAME, databasePort, menus, jsonParser);
         Drone drone = new Drone(map, database, jsonParser, menus);
-        Dro dro = new Dro(map, database, jsonParser, menus);
 
 
         // create the empty table of deliveries and flightpath
@@ -46,24 +48,10 @@ public class App {
         String dateStr = year + "-" + month + "-" + day;
         Date date = Date.valueOf(dateStr);
         database.getOrderFromDatabase(date);
-        //drone.startDeliveries();
-        dro.startDeliveries();
-        //dro.test();
-        String geoJsonPath = dro.getGeoJsonPath();
 
-        try {
-            FileWriter myWriter = new FileWriter(
-                    "drone-" + day + "-" + month + "-" + year + ".geojson");
-            myWriter.write(geoJsonPath);
-            myWriter.close();
-            System.out.println("GeoJson successfully created!");
-        } catch (IOException e) {
-            System.out.println("Fatal error: Readings GeoJson wasn't created.");
-            e.printStackTrace();
-        }
-
-
-
-
+        // start delivery and get the geoJson string of the flightpath
+        drone.startDeliveries();
+        String geoJsonPath = drone.getGeoJsonPath();
+        writeFile(geoJsonPath, day, month, year);
     }
 }
