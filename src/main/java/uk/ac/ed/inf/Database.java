@@ -2,31 +2,27 @@ package uk.ac.ed.inf;
 
 
 import java.sql.*;
-import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Collections;
 
 public class Database {
 
     private static final String PROTOCOL = "jdbc:derby://";
     private static final String DATABASE_NAME = "/derbyDB";
+
     private String name;
     private String port;
-    private Menus menus;
-    private JsonParser jsonParser;
+
     private Statement statement;
-    private PreparedStatement prepStatement;
     private Connection conn;
     private ArrayList<Order> orderList = new ArrayList<>();
 
-    public Database(String name, String port, Menus menus, JsonParser jsonParser) {
+    public Database(String name, String port) {
         this.name = name;
         this.port = port;
-        this.menus = menus;
-        this.jsonParser = jsonParser;
     }
 
 
+    // getter
     public ArrayList<Order> getOrderList() {
         return orderList;
     }
@@ -34,6 +30,7 @@ public class Database {
     public Connection getConnection() {
         return conn;
     }
+
 
     public void connectToDatabase() throws SQLException {
         String jdbcString = PROTOCOL + this.name + ":" + this.port + DATABASE_NAME;

@@ -29,6 +29,25 @@ public class LongLat {
         this.latitude = latitude;
     }
 
+
+    // getter
+    public double getLongitude() {
+        return longitude;
+    }
+
+    public double getLatitude() {
+        return latitude;
+    }
+
+    public int getAngle() {
+        return angle;
+    }
+
+    public Point getPoint() {
+        return Point.fromLngLat(longitude, latitude);
+    }
+
+
     /**
      * @param longLat a LongLat object represents a point
      * @return a double represents the pythagorean distance in degrees between two points
@@ -163,12 +182,7 @@ public class LongLat {
         double latDifference = targetPos.getLatitude() - currentPos.getLatitude();
 
         int angle = (int) Math.toDegrees(Math.atan2(latDifference, lngDifference));
-
-        // angle only between 0 - 350
-        if (angle < 0) {
-            angle += 360;
-        }
-
+        angle =validAngle(angle);
         angle = Math.round(angle / 10) * 10;
         return angle;
     }
@@ -182,38 +196,7 @@ public class LongLat {
         return angle;
     }
 
-
     public static LongLat convertW3wCoordinateToLongLat(W3wCoordinate w3wCoordinate) {
         return new LongLat(w3wCoordinate.coordinates.lng, w3wCoordinate.coordinates.lat);
-    }
-
-
-    // getter and setter
-    public double getLongitude() {
-        return longitude;
-    }
-
-    public void setLongitude(double longitude) {
-        this.longitude = longitude;
-    }
-
-    public double getLatitude() {
-        return latitude;
-    }
-
-    public void setLatitude(double latitude) {
-        this.latitude = latitude;
-    }
-
-    public int getAngle() {
-        return angle;
-    }
-
-    public void setAngle(int angle) {
-        this.angle = angle;
-    }
-
-    public Point getPoint() {
-        return Point.fromLngLat(longitude, latitude);
     }
 }

@@ -25,9 +25,9 @@ public class App {
 //        String databasePort = args[4];
 
 
-        String day = "30";
-        String month = "12";
-        String year = "2023";
+        String day = "01";
+        String month = "01";
+        String year = "2022";
         String webPort = "9898";
         String databasePort = "9876";
 
@@ -36,9 +36,8 @@ public class App {
         JsonParser jsonParser = new JsonParser(httpServer);
         Map map = new Map(jsonParser);
         Menus menus = new Menus(jsonParser);
-        Database database = new Database(NAME, databasePort, menus, jsonParser);
+        Database database = new Database(NAME, databasePort);
         Drone drone = new Drone(map, database, jsonParser, menus);
-
 
         // create the empty table of deliveries and flightpath
         database.connectToDatabase();

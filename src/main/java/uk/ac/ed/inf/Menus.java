@@ -1,19 +1,7 @@
 package uk.ac.ed.inf;
 
-import java.io.IOException;
-import java.lang.reflect.Array;
-import java.lang.reflect.Type;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.net.http.HttpResponse.BodyHandlers;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 /**
  * Using a HttpServer to get the menus from the server.
@@ -22,16 +10,9 @@ import com.google.gson.reflect.TypeToken;
  * After getting the menus, the Menus class could deserialise the file and do further processing.</p>5
  */
 public class Menus {
-    private JsonParser jsonParser;
-    private ArrayList<Shop> shopList;
-    private HashMap<String, Integer> itemsAndPrices = new HashMap<String, Integer>();
+    public final ArrayList<Shop> shopList;
+    public final HashMap<String, Integer> itemsAndPrices = new HashMap<String, Integer>();
 
-    /**
-     * Construct a Menus object with two parameters
-     *
-     * @param name name of the server. E.g: LocalHost
-     * @param port port where the web server is running. E.g: 9898
-     */
     public Menus(JsonParser jsonParser) {
         jsonParser.readMenusFromServer();
         this.shopList = jsonParser.getMenus();
@@ -69,6 +50,7 @@ public class Menus {
 
     /**
      * Return the W3W of the order shop
+     *
      * @param orders
      * @return
      */
@@ -95,15 +77,5 @@ public class Menus {
             }
         }
         return shopLocation;
-    }
-
-
-    // getter
-    public ArrayList<Shop> getShopList() {
-        return this.shopList;
-    }
-
-    public HashMap<String, Integer> getItemsAndPrices() {
-        return this.itemsAndPrices;
     }
 }
