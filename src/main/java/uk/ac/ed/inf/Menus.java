@@ -4,26 +4,30 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
- * Using a HttpServer to get the menus from the server.
- *
- * <p> A Menus class could establish a connection to server and get the menus Json file.
- * After getting the menus, the Menus class could deserialise the file and do further processing.</p>5
+ * Storing the information of all shops
  */
 public class Menus {
+    // public final variables, will not change after assigning the value
     public final ArrayList<Shop> shopList;
     public final HashMap<String, Integer> itemsAndPrices = new HashMap<String, Integer>();
 
+    /**
+     * Constructor of Menus class
+     *
+     * @param jsonParser JsonParser storing the data
+     */
     public Menus(JsonParser jsonParser) {
-        jsonParser.readMenusFromServer();
-        this.shopList = jsonParser.getMenus();
+        this.shopList = jsonParser.menus;
         createItemsAndPrices();
     }
 
+    /**
+     * create the HashMap to store all the items and prices from the menus
+     */
     public void createItemsAndPrices() {
-        // create the HashMap to store all the items and prices from the menus
         for (Shop shop : shopList) {
-            for (Shop.Menu menuDetail : shop.menu) {
-                itemsAndPrices.put(menuDetail.item, menuDetail.pence);
+            for (Shop.Food foodDetail : shop.menu) {
+                itemsAndPrices.put(foodDetail.item, foodDetail.pence);
             }
         }
     }
@@ -31,11 +35,7 @@ public class Menus {
     /**
      * Return the int cost in pence for one delivery.
      *
-     * <p> Grouping all the items and prices from different shops and store them into a hashmap.
-     * Accepts a variable number of ordered item names and check the prices from the hashmap.
-     * Add up all the prices of the item and plus the base delivery cost(50p).</p>
-     *
-     * @param orders variable number of String represents the ordered items.
+     * @param orders arraylist of String represents the ordered items.
      * @return the int cost in pence of having all of these items delivered by drone,
      * including the standard delivery charge of 50p per delivery
      */
@@ -49,18 +49,21 @@ public class Menus {
     }
 
     /**
-     * Return the W3W of the order shop
+     * Get the W3W address of the shop to be collected.
      *
-     * @param orders
-     * @return
+     * @param orders arraylist of String represents the ordered items.
+     * @return the arraylist of W3W string of the order shops
      */
     public ArrayList<String> getShopOfOrder(ArrayList<String> orders) {
         ArrayList<String> shopLocation = new ArrayList<>();
 
+        // loop through each shop
         for (Shop shop : this.shopList) {
+
+            // get the menus items in a list for each shop
             ArrayList<String> menuItems = new ArrayList<>();
-            for (Shop.Menu menuDetail : shop.menu) {
-                menuItems.add(menuDetail.item);
+            for (Shop.Food foodDetail : shop.menu) {
+                menuItems.add(foodDetail.item);
             }
 
             for (String order : orders) {
@@ -69,6 +72,7 @@ public class Menus {
                     break;
                 }
 
+                // if the shop contains the order item, add the shop to the return list
                 if (menuItems.contains(order)) {
                     if (!shopLocation.contains(shop.location)) {
                         shopLocation.add(shop.location);

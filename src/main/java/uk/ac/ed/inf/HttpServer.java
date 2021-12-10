@@ -1,31 +1,36 @@
 package uk.ac.ed.inf;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.ArrayList;
 
+/**
+ * Establish the connection to the http server
+ */
 public class HttpServer {
 
     // Just have one HttpServer, shared between all HttpRequests
     private static final HttpClient client = HttpClient.newHttpClient();
 
-    // variables
+    // private variables
     private String name;
     private String port;
     private String jsonResponse;
 
+    /**
+     * Constructor of the Http Server
+     * @param name machine name of the server
+     * @param port port of the server
+     */
     public HttpServer(String name, String port) {
         this.name = name;
         this.port = port;
     }
 
+    // getter
     public String getHttpServer() {
         return ("http://" + this.name + ":" + this.port);
     }
@@ -34,6 +39,10 @@ public class HttpServer {
         return this.jsonResponse;
     }
 
+    /**
+     * launch http request given the url, and store the response in the variable.
+     * @param url the url string for request
+     */
     public void retrieveJsonFromServer(String url) {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
@@ -42,6 +51,7 @@ public class HttpServer {
         try {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
+            // request success
             if (response.statusCode() == 200) {
                 this.jsonResponse = response.body();
             } else {

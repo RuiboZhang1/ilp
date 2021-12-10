@@ -13,7 +13,7 @@ import java.util.List;
  */
 public class LongLat {
 
-    // variables
+    // private variables
     private double longitude;
     private double latitude;
     private int angle=-999;
@@ -61,6 +61,7 @@ public class LongLat {
     /**
      * @param longLat a LongLat object represents a point
      * @return {@code true} if the distance between current point and the input parameter point
+     *      * are less than a tolerant distance. distance between current point and the input parameter point
      * are less than a tolerant distance.
      */
     public boolean closeTo(LongLat longLat) {
@@ -92,14 +93,21 @@ public class LongLat {
         return nextPos;
     }
 
+    /**
+     * Check the line between dronePos and the endPos is not intersecting with confinement area or no fly zones
+     * @param endPos the target position of the drone movement
+     * @param map map contains the information of no fly zones and confinement area
+     * @return {@code true} if two lines are not intersecting.
+     */
     public boolean isValidMove(LongLat endPos, Map map) {
         boolean isValid = true;
         boolean crossConfinement = false;
         boolean crossNoFlyZone = false;
 
+        // create the line between drone position and the target position
         Line2D curr2End = new Line2D.Double(this.latitude, this.longitude, endPos.latitude, endPos.longitude);
 
-        // check if cross confinement area
+        // check if cross confinement area, loop through all the vertices of the confinement area
         ArrayList<Point> confinementArea = map.confinementArea;
 
         for (int i = 0; i < confinementArea.size(); i++) {
@@ -116,7 +124,7 @@ public class LongLat {
             }
         }
 
-        // check if cross no fly zone
+        // check if cross no fly zones, loop through all the vertices of no fly zones
         ArrayList<Geometry> noFlyZones = map.noFlyZones;
         for (int i = 0; i < noFlyZones.size(); i++) {
             Polygon noFlyZonePoly = (Polygon) noFlyZones.get(i);
@@ -139,64 +147,47 @@ public class LongLat {
         if (crossConfinement || crossNoFlyZone) {
             isValid = false;
         }
-
         return isValid;
     }
 
-
-    public LongLat moveDrone(Map map, LongLat targetPos) {
-        int lastMoveAngle = this.angle;
+    /**
+     * make a single step of the drone
+     * @param targetPos target position of the drone
+     * @return the next position of the drone after moving a step
+     */
+    public LongLat moveDrone(LongLat targetPos) {
         this.angle = estimateCurrTargetAngle(this, targetPos);
-        boolean moveSuccess = false;
-        boolean rotateClockwise = true;
-        LongLat nextPos = null;
-
-        while (!moveSuccess) {
-            nextPos = nextPosition(this.angle);
-            if (isValidMove(nextPos, map)) {
-                moveSuccess = true;
-                lastMoveAngle = this.angle;
-            } else {
-                if (rotateClockwise) {
-                    this.angle = validAngle(this.angle - 10);
-                    if (Math.abs(this.angle - lastMoveAngle) == 180) {
-                        this.angle = validAngle(this.angle - 10);
-                        rotateClockwise = false;
-                    }
-                } else {
-                    this.angle = validAngle(this.angle + 10);
-                    if (Math.abs(this.angle - lastMoveAngle) == 180) {
-                        this.angle = validAngle(this.angle + 10);
-                        rotateClockwise = true;
-                    }
-                }
-            }
-        }
-
+        LongLat nextPos = nextPosition(this.angle);
         return nextPos;
 
     }
 
+    /**
+     * Return a rounded angle between current position and the target position
+     * @param currentPos LongLat object of current position
+     * @param targetPos LongLat object of target position
+     * @return a rounded angle between 0-350 degrees
+     */
     public int estimateCurrTargetAngle(LongLat currentPos, LongLat targetPos) {
         double lngDifference = targetPos.getLongitude() - currentPos.getLongitude();
         double latDifference = targetPos.getLatitude() - currentPos.getLatitude();
 
         int angle = (int) Math.toDegrees(Math.atan2(latDifference, lngDifference));
-        angle =validAngle(angle);
+
+        // The angle must between 0 to 350 and the multiple of 10
+        if (angle < 0) {
+            angle += 360;
+        }
         angle = Math.round(angle / 10) * 10;
         return angle;
     }
 
-    public int validAngle(int angle) {
-        if (angle < 0) {
-            angle += 360;
-        } else if (angle >= 360) {
-            angle -= 360;
-        }
-        return angle;
-    }
-
-    public static LongLat convertW3wCoordinateToLongLat(W3wCoordinate w3wCoordinate) {
+    /**
+     * Convert the W3wCoordinate to a LongLat object
+     * @param w3wCoordinate the coordinate of the what3words
+     * @return a LongLat object represents the what3words coordinate
+     */
+    public static LongLat W3wToLongLat(W3wCoordinate w3wCoordinate) {
         return new LongLat(w3wCoordinate.coordinates.lng, w3wCoordinate.coordinates.lat);
     }
 }

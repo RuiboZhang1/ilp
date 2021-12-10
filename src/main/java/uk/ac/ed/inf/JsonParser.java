@@ -9,15 +9,21 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * JsonParser used for parsing the Json String read from http server
+ */
 public class JsonParser {
 
+    // public final variables, will not change after assigning value
     public final HttpServer httpServer;
     public final List<Feature> noFlyZones;
     public final List<Feature> landmarks;
     public final ArrayList<Shop> menus;
+
+    // private variables, can be change the value later
     private W3wCoordinate wordLongLat;
 
-
+    // Constructor of JsonParser
     public JsonParser(HttpServer httpServer) {
         this.httpServer = httpServer;
         this.noFlyZones = readNoFlyZonesFromServer();
@@ -26,27 +32,14 @@ public class JsonParser {
     }
 
     // Getter
-    public HttpServer getHttpServer() {
-        return this.httpServer;
-    }
-
-    public List<Feature> getNoFlyZones() {
-        return this.noFlyZones;
-    }
-
-    public List<Feature> getLandmarks() {
-        return this.landmarks;
-    }
-
-    public ArrayList<Shop> getMenus() {
-        return this.menus;
-    }
-
     public W3wCoordinate getWordLongLat() {
         return this.wordLongLat;
     }
 
-
+    /**
+     * Parse landmarks.geojson from the server and store in the variable
+     * @return List of Feature represents the landmarks
+     */
     public List<Feature> readLandmarksFromServer() {
         this.httpServer.retrieveJsonFromServer(httpServer.getHttpServer() + "/buildings/landmarks.geojson");
         List<Feature> landmarks = FeatureCollection.fromJson(this.httpServer.getJsonResponse()).features();
@@ -54,6 +47,10 @@ public class JsonParser {
         return landmarks;
     }
 
+    /**
+     * Parse no-fly-zones.geojson from the server and store in the variable
+     * @return List of Feature represents the no fly zones
+     */
     public List<Feature> readNoFlyZonesFromServer() {
         this.httpServer.retrieveJsonFromServer(httpServer.getHttpServer() + "/buildings/no-fly-zones.geojson");
         List<Feature> noFlyZones = FeatureCollection.fromJson(this.httpServer.getJsonResponse()).features();
@@ -61,6 +58,10 @@ public class JsonParser {
         return noFlyZones;
     }
 
+    /**
+     * Parse menus.json from the server and store in the variable
+     * @return
+     */
     public ArrayList<Shop> readMenusFromServer() {
         this.httpServer.retrieveJsonFromServer(httpServer.getHttpServer() + "/menus/menus.json");
         Type listType = new TypeToken<ArrayList<Shop>>() {}.getType();
@@ -69,6 +70,10 @@ public class JsonParser {
         return menus;
     }
 
+    /**
+     * Parse the details.json of the input what3words and store in the variable
+     * @param words String of what3words
+     */
     public void readWordsLongLat(String words) {
         String[] wordList = words.split("\\.");
         String w1 = wordList[0];
